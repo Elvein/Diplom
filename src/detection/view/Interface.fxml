@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="1400.0" minHeight="-Infinity" minWidth="1400.0" prefHeight="730.0" prefWidth="1400.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="detection.view.InterfaceController">
+   <children>
+      <ComboBox fx:id="usernames" editable="true" layoutX="24.0" layoutY="17.0" onAction="#getOnActionUsername" prefHeight="25.0" prefWidth="247.0" AnchorPane.topAnchor="10.0">
+         <opaqueInsets>
+            <Insets />
+         </opaqueInsets></ComboBox>
+      <DatePicker fx:id="startDate" layoutX="736.0" layoutY="17.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#getOnActionStartDate" prefHeight="25.0" prefWidth="120.0" AnchorPane.topAnchor="10.0" />
+      <Label layoutX="714.0" layoutY="15.0" text="От" AnchorPane.topAnchor="15.0" />
+      <DatePicker fx:id="endDate" layoutX="898.0" layoutY="17.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#getOnActionEndDate" prefHeight="25.0" prefWidth="120.0" AnchorPane.topAnchor="10.0" />
+      <Label layoutX="873.0" layoutY="14.0" text="До" AnchorPane.topAnchor="15.0" />
+      <PieChart fx:id="diagramm" layoutX="21.0" layoutY="101.0" prefHeight="250.0" prefWidth="325.0" title="Частота" AnchorPane.bottomAnchor="419.0" AnchorPane.leftAnchor="21.0" AnchorPane.rightAnchor="1051.0" AnchorPane.topAnchor="61.0" />
+      <LineChart fx:id="graphic" axisSortingPolicy="Y_AXIS" layoutX="359.0" layoutY="61.0" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="325.0" title="Динамика" verticalGridLinesVisible="false" verticalZeroLineVisible="false" AnchorPane.bottomAnchor="419.0" AnchorPane.leftAnchor="359.0" AnchorPane.rightAnchor="717.0" AnchorPane.topAnchor="61.0">
+        <xAxis>
+          <CategoryAxis side="BOTTOM" />
+        </xAxis>
+        <yAxis>
+          <NumberAxis side="LEFT" />
+        </yAxis>
+      </LineChart>
+      <Separator layoutX="809.0" layoutY="21.0" orientation="VERTICAL" prefHeight="710.0" prefWidth="14.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="700.0" AnchorPane.topAnchor="50.0" />
+      <Separator layoutX="588.0" layoutY="44.0" prefWidth="200.0" AnchorPane.bottomAnchor="697.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="60.0" />
+      <LineChart fx:id="graphic1" axisSortingPolicy="Y_AXIS" layoutX="23.0" layoutY="322.0" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="325.0" title="Динамика активности на форуме" verticalGridLinesVisible="false" verticalZeroLineVisible="false" AnchorPane.rightAnchor="1052.0" AnchorPane.topAnchor="322.0">
+         <xAxis>
+            <CategoryAxis side="BOTTOM" />
+         </xAxis>
+         <yAxis>
+            <NumberAxis side="LEFT" />
+         </yAxis>
+      </LineChart>
+      <PieChart fx:id="diagramm1" layoutX="359.0" layoutY="322.0" prefHeight="250.0" prefWidth="325.0" AnchorPane.rightAnchor="716.0" AnchorPane.topAnchor="322.0" />
+   </children>
+</AnchorPane>

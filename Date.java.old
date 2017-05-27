@@ -1,0 +1,36 @@
+package detection;
+
+public class Date {
+	public int Day;
+	public int Month;
+	public int Year;
+	
+	public int Hour;
+	public int Minute;
+	
+	public Date(String _Date) {
+		String []tmp = _Date.split(" ");
+		String []day = tmp[0].split("-");
+		Day = Integer.parseInt(day[0]);
+		Month = Integer.parseInt(day[1]);
+		Year = Integer.parseInt(day[2]);
+		if(tmp.length > 1) {
+			String []time = tmp[1].split(":");
+			Hour = Integer.parseInt(time[0]);
+			Minute = Integer.parseInt(time[1]);
+		} else {
+			Hour = 0;
+			Minute = 0;
+		}
+	}
+	
+	public String toString() {
+		String text = String.valueOf(Day) + "." + String.valueOf(Month) + "." + String.valueOf(Year) + " " + String.valueOf(Hour) + ":" + String.valueOf(Minute);
+		return text;
+	}
+	
+	public boolean SameDay(Date date) {
+		return Day == date.Day && Month == date.Month && Year == date.Year;
+	}
+	
+}

@@ -1,0 +1,21 @@
+.default-color0.chart-pie { -fx-pie-color: red; } 
+.default-color1.chart-pie { -fx-pie-color: gray; } 
+.default-color2.chart-pie { -fx-pie-color: green; } 
+.default-color3.chart-pie { -fx-pie-color: red; } 
+.default-color4.chart-pie { -fx-pie-color: gray; } 
+.default-color5.chart-pie { -fx-pie-color: green; } 
+.chart-line-symbol {
+    -fx-background-radius: 1px;
+    -fx-padding: 2px;
+}
+
+.default-color0.chart-series-line { -fx-stroke: red; } 
+.default-color1.chart-series-line { -fx-stroke: gray; } 
+.default-color2.chart-series-line { -fx-stroke: green; } 
+
+.default-color0.chart-line-symbol { -fx-background-color: red; } 
+.default-color1.chart-line-symbol { -fx-background-color: gray; } 
+.default-color2.chart-line-symbol { -fx-background-color: green; } 
+.default-color4.chart-line-symbol { -fx-background-color: red; } 
+.default-color5.chart-line-symbol { -fx-background-color: gray; } 
+.default-color6.chart-line-symbol { -fx-background-color: green; } 
