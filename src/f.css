@@ -4,6 +4,7 @@
 .default-color3.chart-pie { -fx-pie-color: red; } 
 .default-color4.chart-pie { -fx-pie-color: gray; } 
 .default-color5.chart-pie { -fx-pie-color: green; } 
+
 .chart-line-symbol {
     -fx-background-radius: 1px;
     -fx-padding: 2px;

@@ -1,19 +1,18 @@
 package detection;
 import java.io.*;
-
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.bson.Document;
-import org.bson.json.*;
 
 import com.cybozu.labs.langdetect.*;
 import com.mongodb.*;
 import com.mongodb.client.*;
+import com.opencsv.*;
 
 import synesketch.emotion.EmotionalState;
 
@@ -22,160 +21,221 @@ import edu.stanford.nlp.simple.*;
 
 
 public class detection {
-	private static PrintWriter output, outputS, outputLetter;
-	private static List<EmotionalState> sents = new ArrayList<EmotionalState>();
-	private static String outputFileName = "test/outputBaseline/resultsSurpriseBaseline.txt";
-	private static String outputStanf = "test/outputBaseline/emotionOfStanf.txt";
-	private static String outLetter = "test/outputBaseline/Letters.txt";
-	
-	private static String fileName = "test/inputBaseline/surprisedfun.txt";
+	private static PrintWriter outputLetter;
+	private static String outLetter = "output.txt";
 	
 	public static void init() throws LangDetectException, IOException {
 		init("profiles");
 	}
+	
 	public static void main(String[] args) throws Exception {
+		long startTime,endTime,totalTime;
+		init();
 		List<Message> forumMessages = ParseForum();
-		//AnalyzeForum(forumMessages, new Date("24-10-2011"));
+		Map<String,float[]> usersData;
+		Map<String,float[]> LetterData;
 		
-		//Для писем с базы
-		//TranslateLetters();
+		LocalDate startDate;
+	    LocalDate endDate;
+		endDate = forumMessages.get(forumMessages.size()-1).Time.toLocalDate();
+    	startDate = forumMessages.get(0).Time.toLocalDate();
+    	
+    	startTime = System.currentTimeMillis();	//
+    	
+		usersData = AnalyzeForum(forumMessages, startDate, endDate, true);
 
-		BufferedReader in = new BufferedReader(new FileReader(fileName));
-						/*
-						try {
-							// для определения языка
-			    			languages = detectLangs(Text);
-			    			
-			    			if (!languages.get(0).lang.equals("en") || languages.get(0).prob < 0.96) {
-			    				translation = sendMessage(Text); // выбираем само сообщение
-						        ParseAndPrintTranslate(translation, i);  // получаем перевод письма
-			    			}
-			    			else {
-			    				
-			    				outputLetter.println("\n" + i + "\n" + Text); //эмоции со второй библиотеки
-			    				outputLetter.flush();
-			    			    SentSense.AnalyzeText(Text, output); //вывод первой библиотеки
-			    			    StanfordEmotion(Text, outputS, i);
-			    			}
-			    		} catch (LangDetectException e) {
-			    			System.out.println("Can't detect language");
-			    		}*/
-		    //	} while (true);
-			        
+		endTime   = System.currentTimeMillis();	//
+		totalTime = endTime - startTime;	//
+		System.out.println("Emotion recognition time: " + totalTime);
+		List<Letter> LetterMessages = ParseLetter(forumMessages, startDate, endDate);
+		LetterData = TranslateLetters(LetterMessages, forumMessages, startDate, endDate, true);
 	}
-		
-	public static void TranslateLetters() throws Exception {
-		File outputFile = new File(outputFileName);
-		output = new PrintWriter(new FileOutputStream(outputFile));
-
-    	File outputLet = new File(outLetter);
-    	outputLetter = new PrintWriter(new FileOutputStream(outLetter));
-		
-		File outputStan= new File(outputStanf);
-		outputS = new PrintWriter(new FileOutputStream(outputStan));
-		
-		ArrayList<Language> languages;
-		//работа с базой
-		int i = 0;
-		String translation;
-		String Text, Subject;
+	
+	public static String getRandomDate (LocalDate startDate, LocalDate endDate) {
+		long start = startDate.toEpochDay();
+		long end = endDate.toEpochDay();
+		long randomEpochDay = ThreadLocalRandom.current().longs(start, end).findAny().getAsLong();
+		String Time = LocalDate.ofEpochDay(randomEpochDay).toString();
+		return Time;
+	}
+	
+	public static List<Letter> ParseLetter(List<Message> msg, LocalDate startDate, LocalDate endDate) throws Exception {
+		List<Letter> messages = new ArrayList<Letter>();
+		String Text, Subject, id;
 		// подключение к базе
 		MongoClient mongoClient = new MongoClient("localhost", 27017);
 		MongoDatabase database = mongoClient.getDatabase("bragi_alt");
 		MongoCollection<Document> collection = database.getCollection("messages");
-				
+
 		MongoCursor<Document> cursor = collection.find().iterator();
 		try {
 			Document nextCursor;
-			while (cursor.hasNext() && i < 1000) {
+			
+			while (cursor.hasNext()) {
 		    	nextCursor = cursor.next();
 		    	Text = nextCursor.getString("bodyText");
 		    	Subject = nextCursor.getString("subject");
+		    	id = nextCursor.getString("messageId");
 		    					    			    	
-		    	if(!Text.isEmpty() && !Text.equals(" ") && !Subject.contains("Re:") && !Subject.contains("Fwd:") && !Text.contains("Re:") && !Text.contains(">>>")) {
-		    		//для перевода текста с файла
-		    		try {
-		    			// для определения языка
-				    	languages = detectLangs(Text);
-				    			
-				    	if (!languages.get(0).lang.equals("en") || languages.get(0).prob < 0.97) {
-				    		outputLetter.println(Text); //вывод письма в файл
-					    	outputLetter.println("\n------------------------------------------------------\n"); 
-					    	outputLetter.flush();
-					    	
-				    		translation = sendMessage(Text); // выбираем само сообщение
-				    		translation = ParseAndPrintTranslate(translation);  // получаем перевод письма
-						    outputLetter.println(translation); //вывод письма в файл
-						    outputLetter.println("\n------------------------------------------------------\n"); 
-					    	outputLetter.flush();
-					    	
-					    	int[] allEmo  = StanfordEmotion(Text);
-			    	    	output.println(i + "\n" + allEmo[0]  + " " + allEmo[1] + " " + allEmo[2]); //вывод эмоции со второй библиотеки
-			    	 	    output.flush();
-				    	}
-				    	else {
-				    			//System.out.println(Text); //что за текст печатаем
-				    	    	SentSense.AnalyzeText(Text, output); //вывод первой библиотеки
-				    	    	int[] allEmo  = StanfordEmotion(Text);
-				    	    	output.println(i + "\n" + allEmo[0]  + " " + allEmo[1] + " " + allEmo[2]); //вывод эмоции со второй библиотеки
-				    	 	    output.flush();
-				    	}
-				    } catch (LangDetectException e) {
-				    	System.out.println("Can't detect language");
-				    }
+		    	if(!Text.isEmpty() && !Text.equals(" ") && !Subject.contains("Re:") && !Subject.contains("Fwd:") && !Subject.contains("Fw:") && !Text.contains("Re:") && !Text.contains(">>>")) {
+		    		Random Random = new Random();
+		    		int randomNumber = (int)Math.floor(msg.size() * Random.nextDouble());
+		    		String user = msg.get(randomNumber).UserName;
+		    		messages.add(new Letter(id, user, Text, getRandomDate(startDate, endDate)));
 		    	}
-					i = i+1;
+		    	else 
+		    		continue;
 			}
 		} finally {
 			cursor.close();
 		}
-		outputLetter.close();
-		outputS.close();
+	    Collections.sort(messages);
+	    return messages;
 	}
-		
-	public static Map<String,float[]> AnalyzeForum(List<Message> msg, LocalDate startDate, LocalDate endDate, boolean translate) throws Exception {
+	
+	public static Map<String,float[]> TranslateLetters(List<Letter> msgLetter, List<Message> msgForum, LocalDate startDate, LocalDate endDate, boolean translate) throws Exception {
 		ArrayList<Language> languages;
 		Map<String,float[]> statistic = new HashMap<String,float[]>();
+		String text, translation = null;
+		CSVWriter writer = new CSVWriter(new FileWriter("emotionsLetter.csv"));
+        // feed in your array (or convert your data to an array)
+		String symbols = "[^\\p{L}\\p{Z}]";//"[\\<\\>\\{\\}/\\*\\^“\\[\\]_░#]"; 
 		
-		String text, translation;
-        for (int i = 0; i < msg.size(); i++) {
-        	int[] messageEmo;
-			try {
-				text = msg.get(i).MessageText;
-				LocalDate msgTime = msg.get(i).Time.toLocalDate();
-				if(!(msgTime.isAfter(startDate) || msgTime.isEqual(startDate)) || !(msgTime.isBefore(endDate) || msgTime.isEqual(endDate)))
+        for (int i = 0; i < msgLetter.size(); i++) {
+        	System.out.println(msgLetter.size());
+        	int[] messageEmo = {0, 0, 0, 0};
+        	float[] allEmo = new float[4];
+		
+			text = msgLetter.get(i).MessageText;
+			LocalDate msgTime = msgLetter.get(i).Time.toLocalDate();
+			if(!(msgTime.isAfter(startDate) || msgTime.isEqual(startDate)) || !(msgTime.isBefore(endDate) || msgTime.isEqual(endDate)))
+				continue;
+			String[] splited_text = text.split("[.?!\\n。？\\t\\r]");
+			
+			for (String translateText : splited_text) {
+				
+				translateText = translateText.replaceAll(symbols, "");
+				if (translateText.length() < 3) {
 					continue;
-				// для определения языка
-    			languages = detectLangs(text);
-				if (translate && (!languages.get(0).lang.equals("en") || languages.get(0).prob < 0.98)) {
-    				translation = sendMessage(text); // выбираем само сообщение
-			        translation = ParseAndPrintTranslate(translation);  // получаем перевод письма
-			        msg.get(i).MessageText = translation;
-    				messageEmo = StanfordEmotion(translation);
-    			} else {
-    				messageEmo = StanfordEmotion(text);
-    			}
-    			
-    			if (statistic.containsKey(msg.get(i).UserName)) {
-            		float[] allEmo = statistic.get(msg.get(i).UserName);
-            		allEmo[0] += messageEmo[0];
+				}
+				try {
+					// для определения языка
+	    			languages = detectLangs(translateText);
+					if (translate && (!languages.get(0).lang.equals("en") || languages.get(0).prob < 0.8)) {
+						translation = sendMessage(translateText); // выбираем само сообщение
+						translation = ParseAndPrintTranslate(translation);  // получаем перевод письма
+						
+						msgLetter.get(i).MessageText = translation;
+	    				messageEmo = StanfordEmotion(translation);
+	    			} else {
+	    				messageEmo = StanfordEmotion(translateText);
+	    			}
+					allEmo[0] += messageEmo[0];
             		allEmo[1] += messageEmo[1];
             		allEmo[2] += messageEmo[2];
             		allEmo[3] += messageEmo[3];
-            		statistic.replace(msg.get(i).UserName, allEmo);
-            	} else {
-            		float[] allEmo = new float[4];
-            		allEmo[0] = messageEmo[0];
-            		allEmo[1] = messageEmo[1];
-            		allEmo[2] = messageEmo[2];
-            		allEmo[3] = messageEmo[3];
-            		statistic.put(msg.get(i).UserName, allEmo);
-            	}
-    		} catch (LangDetectException e) {
-    			System.out.println("Can't detect language");
-    			System.out.println(e.toString());
-    		}
+				} catch (LangDetectException e) {
+	    			System.out.println(e.toString());
+	    		}
+			}
+			
+			/*if (statistic.containsKey(msgLetter.get(i).UserName)) {
+        		float[] allEmo = statistic.get(msgLetter.get(i).UserName);
+        		allEmo[0] += messageEmo[0];
+        		allEmo[1] += messageEmo[1];
+        		allEmo[2] += messageEmo[2];
+        		allEmo[3] += messageEmo[3];
+        		statistic.replace(msgLetter.get(i).UserName, allEmo);
+        	} else {
+        		float[] allEmo = new float[4];
+        		allEmo[0] = messageEmo[0];
+        		allEmo[1] = messageEmo[1];
+        		allEmo[2] = messageEmo[2];
+        		allEmo[3] = messageEmo[3];
+        		statistic.put(msgLetter.get(i).UserName, allEmo);
+        	}*/
+    			
+			String []line = new String[5];
+			line[0] = String.valueOf(msgLetter.get(i).id);
+			line[1] = String.valueOf(allEmo[0]);
+			line[2] = String.valueOf(allEmo[1]);
+			line[3] = String.valueOf(allEmo[2]);
+			line[4] = String.valueOf(allEmo[3]);
+	        writer.writeNext(line);
         }
+        writer.close();
+        return statistic;
+	}
+		
+	public static Map<String,float[]> AnalyzeForum(List<Message> msg, LocalDate startDate, LocalDate endDate, boolean translate) throws Exception {
+		
+		ArrayList<Language> languages;
+		Map<String,float[]> statistic = new HashMap<String,float[]>();
+		 CSVWriter writer = new CSVWriter(new FileWriter("emotionsForum.csv"));
+	        // feed in your array (or convert your data to an array)
+	    String symbols = "[^\\p{L}\\p{Z}]";//"[\\<\\>\\{\\}/\\*\\^“\\[\\]_░#]"; 
+		String text, translation = null;
+        for (int i = 0; i < msg.size(); i++) {
+        	System.out.print("Iter: " + String.valueOf(i) + "\r");
+        	int[] messageEmo = {0, 0, 0, 0};
+        	float[] allEmo = new float[4];
+			text = msg.get(i).MessageText.replaceAll("[░\\t]", "");
+			
+			LocalDate msgTime = msg.get(i).Time.toLocalDate();
+			if(!(msgTime.isAfter(startDate) || msgTime.isEqual(startDate)) || !(msgTime.isBefore(endDate) || msgTime.isEqual(endDate)))
+				continue;
+			
+			String[] splited_text = text.split("[.?!\\n。？]");
+			
+			for (String translateText : splited_text) {
+				translateText = translateText.replaceAll(symbols, "");
+				// для определения языка
+				if (translateText.length() < 3) {
+					continue;
+				}
+				try {
+					languages = detectLangs(translateText);
+					if (translate && (!languages.get(0).lang.equals("en") || languages.get(0).prob < 0.8)) {
+						translation = sendMessage(translateText); // выбираем само сообщение
+						translation = ParseAndPrintTranslate(translation);  // получаем перевод письма
+				        msg.get(i).MessageText = translation;
+
+						messageEmo = StanfordEmotion(translation);
+					} else {
+						messageEmo = StanfordEmotion(translateText);
+					}
+					allEmo[0] += messageEmo[0];
+					allEmo[1] += messageEmo[1];
+					allEmo[2] += messageEmo[2];
+					allEmo[3] += messageEmo[3];
+				} catch (LangDetectException e) {
+					System.out.println(e);
+				}
+			}
+			/*if (statistic.containsKey(msg.get(i).UserName)) {
+				float[] allEmo = statistic.get(msg.get(i).UserName);
+				allEmo[0] += messageEmo[0];
+				allEmo[1] += messageEmo[1];
+				allEmo[2] += messageEmo[2];
+				allEmo[3] += messageEmo[3];
+				statistic.replace(msg.get(i).UserName, allEmo);
+			} else {
+				float[] allEmo = new float[4];
+				allEmo[0] = messageEmo[0];
+				allEmo[1] = messageEmo[1];
+				allEmo[2] = messageEmo[2];
+				allEmo[3] = messageEmo[3];
+				statistic.put(msg.get(i).UserName, allEmo);
+			}*/
+			String []line = new String[5];
+			line[0] = String.valueOf(msg.get(i).idMsg);
+			line[1] = String.valueOf(allEmo[0]);
+			line[2] = String.valueOf(allEmo[1]);
+			line[3] = String.valueOf(allEmo[2]);
+			line[4] = String.valueOf(allEmo[3]);
+	        writer.writeNext(line);
+        }
+        writer.close();
         return statistic;
 	}
 	
@@ -235,7 +295,8 @@ public class detection {
         urlConnection.setDoOutput(true);
         
         List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair("key", "trnsl.1.1.20170206T155147Z.45d94d7b0d17f17a.463c81c05e43638dce9817f8c333120970707b10"));
+       // params.add(new BasicNameValuePair("key", "trnsl.1.1.20170206T155147Z.45d94d7b0d17f17a.463c81c05e43638dce9817f8c333120970707b10")); //my key
+        params.add(new BasicNameValuePair("key", "trnsl.1.1.20170206T144056Z.fc57db4943803739.f92dfb5b300712e7271fc5a7da0d0787060b50c8")); //not my key
         params.add(new BasicNameValuePair("text", msg)); //текст для перевода
         params.add(new BasicNameValuePair("lang", "en")); //язык перевода
         
@@ -280,48 +341,25 @@ public class detection {
 		    //System.out.println(user.toString());
 		    SentSense.AnalyzeText(user.toString(), output);
 		    StanfordEmotion(text, outputS, i);
-		    
 		}*/
 		return pItem.get(0).toString();
 	}
 	
 	public static List<Message> ParseForum() throws Exception {
-		String csvFile = "forum.csv";
-	    String line = "";
-	    String cvsSplitBy = ";";
-		
-	    List<Message> messages = new ArrayList<Message>();
-	    try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile),"UTF-8"))) {
-
-	    	JsonParser parser = new JsonParser();
-			JsonObject mainObject = parser.parse(br).getAsJsonObject();
-			JsonArray sections = mainObject.getAsJsonArray("sections");
-			for (JsonElement section : sections) {
-				JsonObject sectionObj = section.getAsJsonObject();
-				JsonArray topics = sectionObj.getAsJsonArray("topics");
-				for (JsonElement topic : topics) {
-					JsonObject topicObj = topic.getAsJsonObject();
-					JsonArray topicMessages = topicObj.getAsJsonArray("messages");
-					for (JsonElement message : topicMessages)
-					{
-						JsonObject messageObj = message.getAsJsonObject();
-						messages.add(new Message(sectionObj.get("name").toString().replaceAll("\"", ""), topicObj.get("topic").toString().replaceAll("\"", ""), 
-								messageObj.get("user").toString().replaceAll("\"", ""), messageObj.get("message").toString().replaceAll("\"", ""), 
-								messageObj.get("date").toString().replaceAll("\"", "")));
-					}
-				}
-			}
-	    	/*while ((line = br.readLine()) != null) {
-	    		// use comma as separator
-	            String[] message = line.split(cvsSplitBy);
-	            System.out.println(messages);
-	            //, Integer.parseInt(message[2].replaceAll("\\D+", ""))
-	            messages.add(new Message(message[0], message[1], message[2], message[3], message[4]));
-            }*/
-            System.out.println(messages);
-        } catch (IOException e) {
-        	e.printStackTrace();
-	    }
+		//String csvFile = "forum.csv";
+		List<Message> messages = new ArrayList<Message>();
+		CSVReader reader = new CSVReader(new FileReader("Media/forum-data/forum_post.csv"));
+	     String [] nextLine = reader.readNext();
+	     while ((nextLine = reader.readNext()) != null) {
+	    	String id = nextLine[0];
+	    	String date = nextLine[1];
+	        String text = nextLine[3];
+	        String user = nextLine[4];
+	        messages.add(new Message("", 
+	        		user.replaceAll("\"", ""), text.replaceAll("\"", ""), 
+					date.replaceAll("\"", ""), id));
+	        //System.out.println(text);
+	     }
 	    Collections.sort(messages);
 	    //System.out.println(messages);
 	    return messages;
@@ -340,12 +378,10 @@ public class detection {
     
     public static int[] StanfordEmotion(String text) throws FileNotFoundException {
     	double neg = 0, neut = 0, pos = 0;
-    	int sum = 0; //общее число предложений
     	int[] res = new int[4];
     	SentimentClass emotion;
     	
 	    for (Sentence sent : getTextSentences(text)) {
-	    	sum ++;
 	    	emotion = sent.sentiment();
 	    	if (emotion.isPositive())
 	    		pos++;
@@ -359,7 +395,7 @@ public class detection {
 	    res[0] = (int)neg;
 	    res[1] = (int)neut;
 	    res[2] = (int)pos;
-	    res[3] = res[0] + res[1] + res[2];
+	    res[3] = res[0] + res[1] + res[2]; //количество предложений
 	    return res;
     }
     

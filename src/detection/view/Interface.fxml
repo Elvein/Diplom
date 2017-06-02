@@ -9,11 +9,13 @@
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Slider?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
 
 <AnchorPane maxHeight="-Infinity" maxWidth="1400.0" minHeight="-Infinity" minWidth="1400.0" prefHeight="730.0" prefWidth="1400.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="detection.view.InterfaceController">
    <children>
-      <ComboBox fx:id="usernames" editable="true" layoutX="24.0" layoutY="17.0" onAction="#getOnActionUsername" prefHeight="25.0" prefWidth="247.0" AnchorPane.topAnchor="10.0">
+      <ComboBox fx:id="usernames" editable="true" layoutX="244.0" layoutY="10.0" onAction="#getOnActionUsername" prefHeight="25.0" prefWidth="247.0" AnchorPane.topAnchor="10.0">
          <opaqueInsets>
             <Insets />
          </opaqueInsets></ComboBox>
@@ -21,8 +23,8 @@
       <Label layoutX="714.0" layoutY="15.0" text="От" AnchorPane.topAnchor="15.0" />
       <DatePicker fx:id="endDate" layoutX="898.0" layoutY="17.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#getOnActionEndDate" prefHeight="25.0" prefWidth="120.0" AnchorPane.topAnchor="10.0" />
       <Label layoutX="873.0" layoutY="14.0" text="До" AnchorPane.topAnchor="15.0" />
-      <PieChart fx:id="diagramm" layoutX="21.0" layoutY="101.0" prefHeight="250.0" prefWidth="325.0" title="Частота" AnchorPane.bottomAnchor="419.0" AnchorPane.leftAnchor="21.0" AnchorPane.rightAnchor="1051.0" AnchorPane.topAnchor="61.0" />
-      <LineChart fx:id="graphic" axisSortingPolicy="Y_AXIS" layoutX="359.0" layoutY="61.0" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="325.0" title="Динамика" verticalGridLinesVisible="false" verticalZeroLineVisible="false" AnchorPane.bottomAnchor="419.0" AnchorPane.leftAnchor="359.0" AnchorPane.rightAnchor="717.0" AnchorPane.topAnchor="61.0">
+      <PieChart fx:id="diagramm" layoutX="1052.0" layoutY="72.0" legendVisible="false" prefHeight="250.0" prefWidth="325.0" title="Частота" AnchorPane.bottomAnchor="400.0" AnchorPane.leftAnchor="1050.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="60.0" />
+      <LineChart fx:id="graphic" layoutX="694.0" layoutY="61.0" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="325.0" title="Динамика" verticalGridLinesVisible="false" verticalZeroLineVisible="false" AnchorPane.bottomAnchor="400.0" AnchorPane.leftAnchor="700.0" AnchorPane.rightAnchor="375.0" AnchorPane.topAnchor="60.0">
         <xAxis>
           <CategoryAxis side="BOTTOM" />
         </xAxis>
@@ -30,9 +32,8 @@
           <NumberAxis side="LEFT" />
         </yAxis>
       </LineChart>
-      <Separator layoutX="809.0" layoutY="21.0" orientation="VERTICAL" prefHeight="710.0" prefWidth="14.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="700.0" AnchorPane.topAnchor="50.0" />
-      <Separator layoutX="588.0" layoutY="44.0" prefWidth="200.0" AnchorPane.bottomAnchor="697.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="60.0" />
-      <LineChart fx:id="graphic1" axisSortingPolicy="Y_AXIS" layoutX="23.0" layoutY="322.0" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="325.0" title="Динамика активности на форуме" verticalGridLinesVisible="false" verticalZeroLineVisible="false" AnchorPane.rightAnchor="1052.0" AnchorPane.topAnchor="322.0">
+      <Separator layoutX="700.0" layoutY="374.0" orientation="VERTICAL" prefHeight="374.0" prefWidth="14.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="680.0" AnchorPane.topAnchor="380.0" />
+      <LineChart fx:id="activityGraphic" layoutX="24.0" layoutY="67.0" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="270.0" prefWidth="629.0" title="Динамика активности на форуме" verticalGridLinesVisible="false" verticalZeroLineVisible="false" AnchorPane.bottomAnchor="400.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="750.0" AnchorPane.topAnchor="60.0">
          <xAxis>
             <CategoryAxis side="BOTTOM" />
          </xAxis>
@@ -40,6 +41,25 @@
             <NumberAxis side="LEFT" />
          </yAxis>
       </LineChart>
-      <PieChart fx:id="diagramm1" layoutX="359.0" layoutY="322.0" prefHeight="250.0" prefWidth="325.0" AnchorPane.rightAnchor="716.0" AnchorPane.topAnchor="322.0" />
+      <PieChart fx:id="diagrammLetter" layoutX="727.0" layoutY="432.0" legendVisible="false" prefHeight="250.0" prefWidth="325.0" AnchorPane.leftAnchor="700.0" AnchorPane.rightAnchor="375.0" AnchorPane.topAnchor="430.0" />
+      <Separator layoutX="588.0" layoutY="44.0" prefWidth="200.0" AnchorPane.bottomAnchor="697.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="60.0" />
+      <Separator layoutX="705.0" layoutY="376.0" prefWidth="200.0" AnchorPane.leftAnchor="715.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="370.0" />
+      <LineChart fx:id="graphicLetter" layoutX="1053.0" layoutY="432.0" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="265.0" prefWidth="325.0" title="Динамика" verticalGridLinesVisible="false" verticalZeroLineVisible="false" AnchorPane.leftAnchor="1050.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="430.0">
+         <xAxis>
+            <CategoryAxis side="BOTTOM" />
+         </xAxis>
+         <yAxis>
+            <NumberAxis side="LEFT" />
+         </yAxis>
+      </LineChart>
+      <Label layoutX="1043.0" layoutY="387.0" text="Письма">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+      <PieChart fx:id="diagrammTop" layoutX="55.0" layoutY="365.0" legendSide="RIGHT" legendVisible="false" prefHeight="317.0" prefWidth="511.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="869.0" />
+      <ComboBox fx:id="usernamesTopic" layoutX="55.0" layoutY="335.0" onAction="#getOnActionComboBox" prefHeight="25.0" prefWidth="247.0" AnchorPane.leftAnchor="60.0" />
+      <Slider fx:id="slider" layoutX="563.0" layoutY="453.0" min="5.0" orientation="VERTICAL" prefHeight="232.0" prefWidth="76.0" showTickLabels="true" showTickMarks="true" value="10.0" AnchorPane.bottomAnchor="45.0" AnchorPane.rightAnchor="750.0" />
+      <Label layoutX="563.0" layoutY="372.0" prefHeight="65.0" prefWidth="130.0" text="Кол-во отображаемых максимально активных тем" textAlignment="CENTER" wrapText="true" AnchorPane.rightAnchor="726.0" />
    </children>
 </AnchorPane>

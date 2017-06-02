@@ -110,7 +110,6 @@ public class EmotionalControler {
         this.mainApp = mainApp;
         
         // ƒобавление в интерфейс данных из наблюдаемого списка
-        
     }
 	
 	public final void textProcessing() throws Exception {
@@ -122,12 +121,12 @@ public class EmotionalControler {
 		for (Sentence sentence : sentences) {
 			int[] emotions = mainApp.getSentencesEmotions(sentence.text());
 			Text sent = new Text(sentence.text());
-			if (emotions[0] > emotions[1] && emotions[0] > emotions[2]) {
-				sent.setFill(Color.RED);
-			} else if (emotions[1] > emotions[2]) {
-				sent.setFill(Color.GRAY);
-			} else {
+			if (emotions[2] > emotions[1] && emotions[2] > emotions[0]) {
 				sent.setFill(Color.GREEN);
+			} else if (emotions[0] > emotions[1]) {
+				sent.setFill(Color.RED);
+			} else {
+				sent.setFill(Color.GRAY);
 			}
 
 			allEmo[0] += emotions[0];
@@ -141,13 +140,12 @@ public class EmotionalControler {
 		Text textResult = new Text("»тоговый текст: ");
 		result.setVisible(false);
 		result.getChildren().add(textResult);
-		if (allEmo[0] > allEmo[1] && allEmo[0] > allEmo[2]) {
-			textResult = new Text("негативный");
-		} else if (allEmo[1] > allEmo[2]) {
-			textResult = new Text("нейтральный");
-		} else {
+		if (allEmo[2] > allEmo[1] && allEmo[2] > allEmo[0]) {
 			textResult = new Text("позитивный");
-		}
+		} else if (allEmo[0] > allEmo[1]) {
+			textResult = new Text("негативный");
+		} else 
+			textResult = new Text("нейтральный");
 		result.getChildren().add(textResult);
 		result.setVisible(true);
 	}	
