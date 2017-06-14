@@ -102,8 +102,10 @@ public class detecEasy {
 		
         for (int i = 0; i < msgLetter.size(); i++) {
 			LocalDate msgTime = msgLetter.get(i).Time.toLocalDate();
-			if(!(msgTime.isAfter(startDate) || msgTime.isEqual(startDate)) || !(msgTime.isBefore(endDate) || msgTime.isEqual(endDate)))
+			if(msgTime.isBefore(startDate))
 				continue;
+			else if (msgTime.isAfter(endDate))
+				break;
 			statistic.put(msgLetter.get(i).UserName, msgLetter.get(i).Emotions);
         }
         return statistic;
@@ -136,7 +138,6 @@ public class detecEasy {
         		allEmo[3] = msg.Emotions[0] + msg.Emotions[1] + msg.Emotions[2];
         		statistic.put(curDate, allEmo);
         	}
-        		
     	}
     	for(LocalDate curDate : statistic.keySet()) {
         	double[] allEmo = statistic.get(curDate);
@@ -153,10 +154,11 @@ public class detecEasy {
 	public static Map<String,double[]> AnalyzeForum(List<Message> msg, LocalDate startDate, LocalDate endDate, boolean translate) throws Exception {
 		Map<String,double[]> statistic = new HashMap<String,double[]>();
         for (int i = 0; i < msg.size(); i++) {
-						
 			LocalDate msgTime = msg.get(i).Time.toLocalDate();
-			if(!(msgTime.isAfter(startDate) || msgTime.isEqual(startDate)) || !(msgTime.isBefore(endDate) || msgTime.isEqual(endDate)))
+			if(msgTime.isBefore(startDate))
 				continue;
+			else if (msgTime.isAfter(endDate))
+				break;
 			statistic.put(msg.get(i).UserName, msg.get(i).Emotions);
         }
         return statistic;
@@ -248,6 +250,8 @@ public class detecEasy {
 	        String user = nextLine[4];
 	        String topic = nextLine[5];
 	        
+	       // System.out.println(user);
+	        
 	        String[] emo = {"0.0", "0.0", "0.0", "0.0"};
 	        if (emotions.containsKey(id)) {
 	        	emo = emotions.get(id);
@@ -265,13 +269,33 @@ public class detecEasy {
 	public static Map<String,String[]> ParseForumTopic() throws Exception {
 		Map<String,String[]> topic = new HashMap<String,String[]>();
 		String [] nextLine;
-		CSVReader reader = new CSVReader(new FileReader("Media/forum-data/forum_topic.csv"));
+		CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream("Media/forum-data/forum_topic.csv"), "UTF-8"));
 		nextLine = reader.readNext();
 	    while ((nextLine = reader.readNext()) != null) {
 	    	String id = nextLine[0];
-	    	String name = nextLine[2];
+	    	String real_name = nextLine[2];
+	    	String trans_name = real_name;
+	    	String lang = "en";
+	    	try {
+		    	ArrayList<Language> languages = detection.detectLangs(trans_name);
+		    	if (!languages.get(0).lang.equals("en") || languages.get(0).prob < 0.8) {
+		    		trans_name = detection.sendMessage(trans_name); // выбираем само сообщение
+					trans_name = detection.ParseAndPrintTranslate(trans_name);  // получаем перевод письма
+					lang = languages.get(0).lang;
+		    	}
+	    	} catch (LangDetectException e) {
+    			System.out.println(e.toString());
+    		}
+
+	    	String name = trans_name;
+	    	if (name.length() > 18) {
+	    		name = name.substring(0, 18);
+	    		name = "[" + lang + "] " + name + "...";
+	    	}
+	    	else 
+		    	name = "[" + lang + "] " + name;
 	    	String forimId = nextLine[4];
-	    	topic.put(id, new String[]{name, forimId});
+	    	topic.put(id, new String[]{name, forimId, real_name, trans_name, lang});
 	    }
 	    reader.close();	    
 	    return topic;
@@ -285,6 +309,10 @@ public class detecEasy {
 	    while ((nextLine = reader.readNext()) != null) {
 	    	String id = nextLine[0];
 	    	String name = nextLine[2];
+	    	if (name.length() > 20) {
+	    		name = name.substring(0, 20);
+	    		name = name + "...";
+	    	}
 	        String level = nextLine[7];
 	        String parent = "";
 	        if (!level.equals("0"))
@@ -295,7 +323,9 @@ public class detecEasy {
 	    return forum;
 	}
 	
-	public static Map<String,Integer> TopForum(int level, List<Message> messages, Map<String,String[]> topics, Map<String,String[]> forums, LocalDate minDate, LocalDate maxDate, String user) {
+	/*Активность тем*/
+	public static Map<String,Integer> TopForum(int level, List<Message> messages, Map<String,String[]> topics, Map<String,String[]> forums, 
+			LocalDate minDate, LocalDate maxDate, String user, boolean[] selectedEmotions) {
 		Map<String,Integer> statistic = new TreeMap<String,Integer>();
 		
     	for (Message msg : messages) {
@@ -314,26 +344,41 @@ public class detecEasy {
     		if (level == -1) { //This is theme
     			keyName = topics.get(msg.Topic)[0];
     		} else {
+    			int lvl = -1;
+    			
     			String[] curForum = forums.get(topics.get(msg.Topic)[1]);
-    			int lvl = Integer.valueOf(curForum[1]);
+    			lvl = Integer.valueOf(curForum[1]);
+    			
+    			if (lvl < level) //если не на нужном уровне
+    				continue;
     			
     			keyName = curForum[0];
     			while (lvl != level && lvl > 0) {
-    				lvl = Integer.valueOf(forums.get(curForum[2])[1]);
-    				if (!forums.containsKey(curForum[1]))
+    				String parentID = curForum[2];
+    				if (!forums.containsKey(parentID))
     					break;
-    				curForum = forums.get(curForum[1]);
+    				lvl = Integer.valueOf(forums.get(parentID)[1]);
+    				curForum = forums.get(parentID);
         			keyName = curForum[0];
     			}
     		}
     			
+    		if (msg.Emotions[0] > msg.Emotions[1] && msg.Emotions[0] > msg.Emotions[2]) {
+    			if (!selectedEmotions[0])
+    				continue;
+    		} else if (msg.Emotions[2] > msg.Emotions[1]) {
+    			if (!selectedEmotions[2])
+    				continue;
+    		} else 
+    			if (!selectedEmotions[1])
+    				continue;
+    		
     		if (statistic.containsKey(keyName)) {
         		int mesCount = statistic.get(keyName);
         		mesCount ++;
         		statistic.replace(keyName, mesCount);
-        	} else {
+        	} else
         		statistic.put(keyName, 1);
-        	}
     	}
     	return statistic;
 	}
@@ -353,5 +398,20 @@ public class detecEasy {
     		levels[i] = "Раздел " + i;
     	}
     	return levels;
+	}
+	
+	//
+	public static List<Message> deleteMessages(List<Message> messages, Map<String, String[]> topics) {
+		List<Message> newMessages = new ArrayList<Message>();
+		for (Message msg : messages) {
+			String topicId = msg.Topic;
+			if (topics.containsKey(topicId)) {
+				String forumId = topics.get(topicId)[1];
+				if (forumId.equals("92") || forumId.equals("93") || forumId.equals("129") || forumId.equals("144"))
+					continue;
+			}
+			newMessages.add(msg);
+		}
+		return newMessages;
 	}
 }

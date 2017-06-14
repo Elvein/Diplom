@@ -5,11 +5,15 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.LineChart.SortingPolicy;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.PieChart;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.Slider;
 
 import java.io.FileNotFoundException;
@@ -39,6 +43,18 @@ public class InterfaceController {
 	private Slider slider;
 	@FXML
 	private PieChart diagrammTop;
+	@FXML
+	private CheckBox negativeChoice;
+	@FXML
+	private CheckBox neutralChoice;
+	@FXML
+	private CheckBox positiveChoice;
+	@FXML
+	private RadioButton emotionalDinamyc;
+	@FXML
+	private RadioButton loyalityIndex;
+	@FXML
+	private RadioButton reputationIndex;
 	
 	private MainApp mainApp;
 	
@@ -62,12 +78,8 @@ public class InterfaceController {
         diagramm.setData(mainApp.getUserStatistic());
         startDate.setValue(mainApp.getStartDate());
         endDate.setValue(mainApp.getEndDate());
-        graphic.getData().add(mainApp.getGraphic(0));
-        graphic.getData().add(mainApp.getGraphic(1));
-        graphic.getData().add(mainApp.getGraphic(2));
-        graphicLetter.getData().add(mainApp.getGraphicLetter(0));
-        graphicLetter.getData().add(mainApp.getGraphicLetter(1));
-        graphicLetter.getData().add(mainApp.getGraphicLetter(2));
+        graphic.getData().addAll(mainApp.getGraphic(0), mainApp.getGraphic(1), mainApp.getGraphic(2));
+        graphicLetter.getData().addAll(mainApp.getGraphicLetter(0), mainApp.getGraphicLetter(1), mainApp.getGraphicLetter(2));
         
         diagrammLetter.setData(mainApp.getLetterStatistic());
     	diagrammTop.setData(mainApp.getForumStatistic());
@@ -82,13 +94,23 @@ public class InterfaceController {
             	try {
 					mainApp.setTopCount(slider.getValue());
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
             }
         });
-
     }
+	
+	public final void getOnActionChoiceNegative() throws Exception {
+		mainApp.setEmotionsToTopics(negativeChoice.isSelected(), 0);
+	}
+	
+	public final void getOnActionChoiceNeutral() throws Exception {
+		mainApp.setEmotionsToTopics(neutralChoice.isSelected(), 1);
+	}
+	
+	public final void getOnActionChoicePositive() throws Exception {
+		mainApp.setEmotionsToTopics(positiveChoice.isSelected(), 2);
+	}
 	
 	public final void getOnActionEndDate() throws Exception {
 		mainApp.setEndDate(endDate.getValue());
@@ -108,5 +130,10 @@ public class InterfaceController {
 			mainApp.setLevel(-1);
 		else
 			mainApp.setLevel(index);
+	}
+	
+	public final void selectRadioButton() throws Exception {
+		int code = emotionalDinamyc.isSelected() ? 0 : (loyalityIndex.isSelected() ? 1 : 2);
+		mainApp.changeGraphicType(code);
 	}
 }

@@ -11,12 +11,12 @@
         <menus>
           <Menu mnemonicParsing="false" text="Файл">
             <items>
-              <MenuItem mnemonicParsing="false" text="Закрыть" />
+              <MenuItem fx:id="saveButton" mnemonicParsing="false" text="Экспорт тем в файл" />
             </items>
           </Menu>
           <Menu mnemonicParsing="false" text="Эмоции">
                <items>
-                  <MenuItem fx:id="emoButton" mnemonicParsing="false" text="Unspecified Action" />
+                  <MenuItem fx:id="emoButton" mnemonicParsing="false" text="Определить эмоцию текста" />
                </items></Menu>
         </menus>
       </MenuBar>

@@ -20,10 +20,7 @@ import com.google.gson.*;
 import edu.stanford.nlp.simple.*;
 
 
-public class detection {
-	private static PrintWriter outputLetter;
-	private static String outLetter = "output.txt";
-	
+public class detection {	
 	public static void init() throws LangDetectException, IOException {
 		init("profiles");
 	}
@@ -138,23 +135,7 @@ public class detection {
 	    			System.out.println(e.toString());
 	    		}
 			}
-			
-			/*if (statistic.containsKey(msgLetter.get(i).UserName)) {
-        		float[] allEmo = statistic.get(msgLetter.get(i).UserName);
-        		allEmo[0] += messageEmo[0];
-        		allEmo[1] += messageEmo[1];
-        		allEmo[2] += messageEmo[2];
-        		allEmo[3] += messageEmo[3];
-        		statistic.replace(msgLetter.get(i).UserName, allEmo);
-        	} else {
-        		float[] allEmo = new float[4];
-        		allEmo[0] = messageEmo[0];
-        		allEmo[1] = messageEmo[1];
-        		allEmo[2] = messageEmo[2];
-        		allEmo[3] = messageEmo[3];
-        		statistic.put(msgLetter.get(i).UserName, allEmo);
-        	}*/
-    			
+				
 			String []line = new String[5];
 			line[0] = String.valueOf(msgLetter.get(i).id);
 			line[1] = String.valueOf(allEmo[0]);
@@ -168,7 +149,6 @@ public class detection {
 	}
 		
 	public static Map<String,float[]> AnalyzeForum(List<Message> msg, LocalDate startDate, LocalDate endDate, boolean translate) throws Exception {
-		
 		ArrayList<Language> languages;
 		Map<String,float[]> statistic = new HashMap<String,float[]>();
 		 CSVWriter writer = new CSVWriter(new FileWriter("emotionsForum.csv"));
@@ -212,21 +192,6 @@ public class detection {
 					System.out.println(e);
 				}
 			}
-			/*if (statistic.containsKey(msg.get(i).UserName)) {
-				float[] allEmo = statistic.get(msg.get(i).UserName);
-				allEmo[0] += messageEmo[0];
-				allEmo[1] += messageEmo[1];
-				allEmo[2] += messageEmo[2];
-				allEmo[3] += messageEmo[3];
-				statistic.replace(msg.get(i).UserName, allEmo);
-			} else {
-				float[] allEmo = new float[4];
-				allEmo[0] = messageEmo[0];
-				allEmo[1] = messageEmo[1];
-				allEmo[2] = messageEmo[2];
-				allEmo[3] = messageEmo[3];
-				statistic.put(msg.get(i).UserName, allEmo);
-			}*/
 			String []line = new String[5];
 			line[0] = String.valueOf(msg.get(i).idMsg);
 			line[1] = String.valueOf(allEmo[0]);
@@ -295,8 +260,8 @@ public class detection {
         urlConnection.setDoOutput(true);
         
         List<NameValuePair> params = new ArrayList<NameValuePair>();
-       // params.add(new BasicNameValuePair("key", "trnsl.1.1.20170206T155147Z.45d94d7b0d17f17a.463c81c05e43638dce9817f8c333120970707b10")); //my key
-        params.add(new BasicNameValuePair("key", "trnsl.1.1.20170206T144056Z.fc57db4943803739.f92dfb5b300712e7271fc5a7da0d0787060b50c8")); //not my key
+        params.add(new BasicNameValuePair("key", "trnsl.1.1.20170206T155147Z.45d94d7b0d17f17a.463c81c05e43638dce9817f8c333120970707b10")); //my key
+       // params.add(new BasicNameValuePair("key", "trnsl.1.1.20170206T144056Z.fc57db4943803739.f92dfb5b300712e7271fc5a7da0d0787060b50c8")); //not my key
         params.add(new BasicNameValuePair("text", msg)); //текст для перевода
         params.add(new BasicNameValuePair("lang", "en")); //язык перевода
         

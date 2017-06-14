@@ -1,18 +1,28 @@
 package detection;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.cybozu.labs.langdetect.Language;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
 
 import detection.view.InterfaceController;
 import detection.view.RootController;
@@ -53,6 +63,7 @@ public class MainApp extends Application {
     private Map<LocalDate, double[]> statisticByDays;
     private Map<LocalDate, double[]> statisticByLetters;
     private Map<LocalDate, Integer> activityStatistic;
+    private Map<String,Integer> forumMessageTopStatistic;
     
     private Series graphDataNeg; 
     private Series graphDataNeu; 
@@ -70,9 +81,13 @@ public class MainApp extends Application {
     private int level;
     private int topCount;
     
+    private int graphicType;
+    
     private boolean translate = true;
     
     private String textEmotion;
+    
+    private boolean selectedEmotionsTopics[];
     
     public MainApp() throws Exception {
     	detection.init();
@@ -83,25 +98,28 @@ public class MainApp extends Application {
     	Letter = detecEasy.ParseLetter(forumMessages, startDate, endDate);
     	topics = detecEasy.ParseForumTopic();
     	forums = detecEasy.ParseForumForum();
+    	
+    	//////////////////////////////////////////
+    	forumMessages = detecEasy.deleteMessages(forumMessages, topics);
+    	/////////////////////////////////////////
+    	
+    	graphicType = 0;
+    	
     	username = "";
     	level = -1;
     	topCount = 10;
     	graphDataNeg = new Series<>(); 
     	graphDataNeu = new Series<>(); 
     	graphDataPos = new Series<>(); 
-    	graphDataNeg.setName("Negative");
-    	graphDataNeu.setName("Neutral");
-		graphDataPos.setName("Positive");
 		
     	letterDataNeg = new Series<>(); 
     	letterDataNeu = new Series<>(); 
     	letterDataPos = new Series<>(); 
-		letterDataNeg.setName("Negative");
-		letterDataNeu.setName("Neutral");
-		letterDataPos.setName("Positive");
 		
 		activityData = new Series<>(); 
 		activityData.setName("Кол-во сообщений в день");
+		
+		selectedEmotionsTopics = new boolean[] {true, true, true};
     	
     	Update();
     	translate = false;
@@ -163,12 +181,14 @@ public class MainApp extends Application {
     
     public void UpdateTopStatistic() {
     	forumTop.clear();
-    	Map<String,Integer> forumMessageTopStatistic = detecEasy.TopForum(level, forumMessages, topics, forums, startDate, endDate, username);
+    	forumMessageTopStatistic = detecEasy.TopForum(level, forumMessages, topics, forums, startDate, endDate, username, selectedEmotionsTopics);
+    	forumMessageTopStatistic = MapUtil.sortByValue(forumMessageTopStatistic);
+    	
     	int count = forumMessageTopStatistic.size();
     	Object[] keys = forumMessageTopStatistic.keySet().toArray();
-    	for (int i = count - 1; i > count - 1 - topCount && i >= 0; i--) {
+    	for (int i = 0; i < topCount && i < count; i++) {
     		forumTop.add(new PieChart.Data(String.valueOf(keys[i]), forumMessageTopStatistic.get(keys[i]).intValue()));
-    		
+    		System.out.println(forumMessageTopStatistic.get(keys[i]));
     	}
     }
     
@@ -188,78 +208,63 @@ public class MainApp extends Application {
     	statisticByDays = detecEasy.ForumStatisticByDays(forumMessages, startDate, endDate, username);
     	statisticByLetters = detecEasy.LetterStatisticByDays(Letter, startDate, endDate, username);
     	activityStatistic = detecEasy.ForumActivityStatistic(forumMessages, startDate, endDate, username);
+    	
+    	switch (graphicType) {
+    	case 0:
+    		graphDataNeg.setName("Negative");
+        	graphDataNeu.setName("Neutral");
+    		graphDataPos.setName("Positive");
+    		
+    		letterDataNeg.setName("Negative");
+    		letterDataNeu.setName("Neutral");
+    		letterDataPos.setName("Positive");
+    		break;
+    	case 1:
+    	case 2:
+    		graphDataNeg.setName("");
+        	graphDataNeu.setName("Value");
+    		graphDataPos.setName("");
+    		
+    		letterDataNeg.setName("");
+    		letterDataNeu.setName("Value");
+    		letterDataPos.setName("");
+    		break;
+    	}
 
     	double[] allEmo = new double[4];
-    	if (username.equals("")) {
-	    	for(String user : usersData.keySet()) {
-	    		double[] userEmo = usersData.get(user);
-	     		allEmo[0] += userEmo[0];
-	     		allEmo[1] += userEmo[1];
-	     		allEmo[2] += userEmo[2];
-	     		allEmo[3] += userEmo[3];
-	        }
-	    	if (allEmo[3] == 0)
-     			allEmo[3] = 1;
-	    	for (int i = 0; i<3; i++)
-	    		allEmo[i] /= allEmo[3];
-    	}
-    	else {
-    		if (usersData.containsKey(username)) {
-    			double[] userEmo = usersData.get(username);
-	     		allEmo[0] += userEmo[0];
-	     		allEmo[1] += userEmo[1];
-	     		allEmo[2] += userEmo[2];
-	     		allEmo[3] += userEmo[3];
-	     		if (allEmo[3] == 0)
-	     			allEmo[3] = 1;
-		    	for (int i = 0; i<3; i++) {
-		    		allEmo[i] /= allEmo[3];
-		    	}
-    		}
-    	} 
-    		
-    	userEmotions.add(new PieChart.Data("Negative", allEmo[0]));
-    	userEmotions.add(new PieChart.Data("Neutral", allEmo[1]));
-    	userEmotions.add(new PieChart.Data("Positive", allEmo[2]));
-    	
+    	    	
     	List<LocalDate> days = new ArrayList<LocalDate>(statisticByDays.keySet());
     	Collections.sort(days);
     	for (LocalDate day : days) {
     		double[] stat = statisticByDays.get(day);
-    		graphDataNeg.getData().add(new Data(day.toString(), stat[0]));   
-    		graphDataNeu.getData().add(new Data(day.toString(), stat[1]));   
-    		graphDataPos.getData().add(new Data(day.toString(), stat[2]));    		
+    	
+    		switch (graphicType) {
+    		case 0:
+    			graphDataNeg.getData().add(new Data(day.toString(), stat[0]));   
+        		graphDataNeu.getData().add(new Data(day.toString(), stat[1]));   
+        		graphDataPos.getData().add(new Data(day.toString(), stat[2]));  
+        		break;
+    		case 1:
+    			if (stat[0] != 0)
+    				graphDataNeu.getData().add(new Data(day.toString(), stat[2]/stat[0]));   
+    			else 
+    				graphDataNeu.getData().add(new Data(day.toString(), stat[2]));   
+    			break;
+    		case 2:
+    			graphDataNeu.getData().add(new Data(day.toString(), stat[1] + stat[2] - stat[0]));   
+    			break;
+    		}
+    		
+    		allEmo[0] += stat[0];
+     		allEmo[1] += stat[1];
+     		allEmo[2] += stat[2];
+     		allEmo[3] += stat[0] + stat[1] + stat[2];
     	}
+    	userEmotions.add(new PieChart.Data("Negative", allEmo[0]));
+    	userEmotions.add(new PieChart.Data("Neutral", allEmo[1]));
+    	userEmotions.add(new PieChart.Data("Positive", allEmo[2]));
     	
     	double[] allEmoLetter = new double[4];
-    	if (username.equals("")) {
-	    	for(String user : lettersData.keySet()) {
-	    		double[] userEmo = lettersData.get(user);
-	    		allEmoLetter[0] += userEmo[0];
-	    		allEmoLetter[1] += userEmo[1];
-	    		allEmoLetter[2] += userEmo[2];
-	    		allEmoLetter[3] += userEmo[3];
-	        }
-	    	if (allEmoLetter[3] == 0)
-	    		allEmoLetter[3] = 1;
-	    	for (int i = 0; i<3; i++)
-	    		allEmoLetter[i] /= allEmoLetter[3];
-    	}
-    	else {
-    		if (lettersData.containsKey(username)) {
-    			double[] userEmo = lettersData.get(username);
-    			allEmoLetter[0] += userEmo[0];
-    			allEmoLetter[1] += userEmo[1];
-    			allEmoLetter[2] += userEmo[2];
-    			allEmoLetter[3] += userEmo[3];
-	     		if (allEmoLetter[3] == 0)
-	     			allEmoLetter[3] = 1;
-		    	for (int i = 0; i<3; i++) {
-		    		allEmoLetter[i] /= allEmoLetter[3];
-		    	}
-    		}
-    	} 
-    	
     	days = new ArrayList<LocalDate>(activityStatistic.keySet());
     	Collections.sort(days);
     	for (LocalDate day : days) {
@@ -271,9 +276,27 @@ public class MainApp extends Application {
     	for (LocalDate day : days) {
     		double[] stat = statisticByLetters.get(day);
     		
-    		letterDataNeg.getData().add(new Data(day.toString(), stat[0]));   
-    		letterDataNeu.getData().add(new Data(day.toString(), stat[1]));   
-    		letterDataPos.getData().add(new Data(day.toString(), stat[2]));    		
+    		switch (graphicType) {
+    		case 0:
+    			letterDataNeg.getData().add(new Data(day.toString(), stat[0]));   
+    			letterDataNeu.getData().add(new Data(day.toString(), stat[1]));   
+        		letterDataPos.getData().add(new Data(day.toString(), stat[2]));  
+        		break;
+    		case 1:
+    			if (stat[0] != 0)
+    				letterDataNeu.getData().add(new Data(day.toString(), stat[2]/stat[0]));   
+    			else 
+    				letterDataNeu.getData().add(new Data(day.toString(), stat[2]));   
+    			break;
+    		case 2:
+    			letterDataNeu.getData().add(new Data(day.toString(), stat[1] + stat[2] - stat[0]));   
+    			break;
+    		}
+    		
+    		allEmoLetter[0] += stat[0];
+    		allEmoLetter[1] += stat[1];
+    		allEmoLetter[2] += stat[2];
+    		allEmoLetter[3] += stat[3];
     	}
     	
     	letterEmotions.add(new PieChart.Data("Negative", allEmoLetter[0]));
@@ -358,6 +381,31 @@ public class MainApp extends Application {
     	UpdateTopStatistic();
     }
     
+    public void setEmotionsToTopics(boolean state, int emoNum) {
+    	selectedEmotionsTopics[emoNum] = state;
+    	UpdateTopStatistic();
+    }
+    
+    public void changeGraphicType(int type) throws Exception {
+    	graphicType = type;
+    	Update();
+    }
+    
+    /*Сохранение тем в файл*/
+    public void saveTopicsToFile(File file) throws IOException {
+    	//topics
+    	String [] nextLine;
+    	CSVWriter writer = new CSVWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
+    	writer.writeNext(new String[]{"topicId", "real_name", "trans_name", "lang", "msg_count"});
+    	for (String key : topics.keySet()) {
+    		nextLine = topics.get(key);
+    		if (forumMessageTopStatistic.containsKey(nextLine[0]))
+    			writer.writeNext(new String[]{key, nextLine[2], nextLine[3], nextLine[4], String.valueOf(forumMessageTopStatistic.get(nextLine[0]))});
+    		else
+    			writer.writeNext(new String[]{key, nextLine[2], nextLine[3], nextLine[4], "0"});
+    	}
+	    writer.close();		 
+    }
     /* Для интерфейса определения окраски */
     
     public List<Sentence> getSentencesFromText(String text) {

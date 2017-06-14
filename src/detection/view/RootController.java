@@ -1,5 +1,6 @@
 package detection.view;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
@@ -13,11 +14,14 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class RootController {
 	@FXML
 	private MenuItem emoButton;
+	@FXML
+	private MenuItem saveButton;
 	
 	private MainApp mainApp;
 	
@@ -56,6 +60,25 @@ public class RootController {
 						e1.printStackTrace();
 					}
             	}
+            }
+        });
+        
+        saveButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+            	FileChooser fileChooser = new FileChooser();
+                fileChooser.setTitle("Сохранить таблицу");
+                fileChooser.getExtensionFilters().addAll(
+                        new FileChooser.ExtensionFilter("CSV-таблица", "*.csv")
+                    );
+                File file = fileChooser.showSaveDialog(stage);
+                if (file != null) {
+	            	try {
+						mainApp.saveTopicsToFile(file);
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+                }
             }
         });
     }
